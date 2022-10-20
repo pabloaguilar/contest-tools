@@ -1,0 +1,5 @@
+pip install absl-py
+pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib  
+pip install gspread
+pip install pandas
+pip install jinja2
