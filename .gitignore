@@ -1,2 +1,3 @@
 # omegaUp Access Tokens
 *.token
+cache/*
