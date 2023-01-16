@@ -1,20 +1,33 @@
 import uuid
-from typing import Optional
+from typing import Dict, Optional
 
 import gspread
 import pandas as pd
 
 from absl import logging
 from concurso import DbConcursos
+from unidecode import unidecode
 
 import libomegaup.omegaup.api as api
+
+class Participante(object):
+  def __init__(self, usuario: Optional[str] = None, nombre: Optional[str] = None):
+    self.usuario = usuario
+    self.nombre = nombre
+    self.rating: Optional[int] = None
+    # TODO(pablo): Como consideramos la lista de eventos e identidades de cada participante?
+    # Por ahorita, solo usamos un `int` para contarlos, pero seria útil tener una lista
+    # de eventos e identidades.
+    self.eventos: int = 0
+
 
 class Participantes(object):
   def __init__(self, omegaup_client: api.Client, id_hoja_registro: Optional[str]):
     self.omegaup_client = omegaup_client
     self.id_hoja_registro = id_hoja_registro    
-    self.data = None
+    self.data: Optional[pd.DataFrame] = None
     # self.lee_registro()
+    self.participantes: Dict[str, Participante] = {}
 
   def lee_registro(self):
     sheets = gspread.service_account()
@@ -71,7 +84,13 @@ class Participantes(object):
               plantilla, row, enviar_realmente=True), axis=1)
 
   def combina_ranking(self, db: DbConcursos):
-    pass
+    for concurso in db.concursos:
+      for nombre in concurso.ranking.nombre:
+        nombre = unidecode(nombre)
+        if nombre not in self.participantes:
+          self.participantes[nombre] = Participante(nombre=nombre)
+
+    logging.vlog(2, '%d nombres en total', len(self.participantes))
 
   def _sube_datos(self):
     sheets = gspread.service_account()

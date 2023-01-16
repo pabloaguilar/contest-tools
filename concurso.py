@@ -31,7 +31,7 @@ class Concurso(object):
     return os.path.join(os.getcwd(), FLAGS.cache_concursos, alias + '.pickle')
 
   def tal_vez_guarda_cache(self):
-    if self.finish_time <= datetime.now():
+    if self.finish_time is not None and self.finish_time <= datetime.now():
       cache_path = self._archivo_cache(self.alias)
       with open(cache_path, 'wb') as cache_file:
         pickle.dump(self, cache_file)
@@ -81,17 +81,24 @@ class Concurso(object):
 
   @classmethod
   def _extrae_datos(cls, renglon):
-    return {'usuario': renglon['username'],
-            'nombre': renglon['name'],
-            'puntos': renglon['total']['points'],
-            'rank': renglon['place']}
+    return {'usuario': renglon.username,
+            'nombre': renglon.name,
+            'puntos': renglon.total.points,
+            'rank': renglon.place,
+            'tiene_envios': any(problem.runs > 0 for problem in renglon.problems)}
 
   def lee_ranking(self):
     if self.scoreboard is None:
-      self.scoreboard = self.contest_api.scoreboard(contest_alias=self.alias)
+      try:
+        self.scoreboard = self.contest_api.scoreboard(contest_alias=self.alias)
+      except:
+        pass
+      if self.scoreboard is None:
+        logging.error('No se pudo cargar scoreboard de %s', self.alias)
+        return
       self.ranking = pd.DataFrame(
-          self._extrae_datos(renglon) for renglon in self.scoreboard['ranking'])
-      self.finish_time = datetime.fromtimestamp(self.scoreboard['finish_time'])
+          self._extrae_datos(renglon) for renglon in self.scoreboard.ranking)
+      self.finish_time = self.scoreboard.finish_time
     else:
       logging.vlog(2, 'El scoreboard de %s ya se habia cargado', self.alias)
 
@@ -125,8 +132,11 @@ class DbConcursos(object):
       pass
 
     if concurso is None:
-      concurso = Concurso(self.omegaup_client, alias)
-      logging.info('Cargando concurso %s de la API', alias)
+      try:
+        concurso = Concurso(self.omegaup_client, alias)
+        logging.info('Cargando concurso %s de la API', alias)
+      except:
+        logging.error('No se pudo cargar concurso %s de la API', alias)
 
     return concurso
 

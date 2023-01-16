@@ -1,3 +1,4 @@
+import collections
 import math
 from statistics import NormalDist
 from typing import Dict, List, Set
@@ -6,7 +7,7 @@ from absl import flags
 from absl import logging
 
 from concurso import Concurso
-from participantes import Participantes
+from participantes import Participante, Participantes
 
 class Rating(object):
   """Clase encargada de actualizar ratings.
@@ -93,12 +94,11 @@ def sign(x):
   else:
     return 1
 
-Party = int
 RatingChange = int
-StandingsRow = int
+StandingsRow = collections.namedtuple('StandingsRow', ['rank', 'points', 'party'])
 
 class Contestant(object):
-  def __init__(self, party:Party, rank:int, points:float, rating:int):
+  def __init__(self, party: Participante, rank: int, points: float, rating: int):
     self.party = party
     self.rank = rank
     self.points = points
@@ -115,7 +115,7 @@ class CodeforcesRatingCalculator(object):
   def aggregateRating(self, ratingChanges: List[RatingChange]):
     rating = CodeforcesRatingCalculator.INITIAL_RATING
     for rc in ratingChanges:
-        rating += rc
+      rating += rc
 
     return rating
  
@@ -128,25 +128,25 @@ class CodeforcesRatingCalculator(object):
 
     return maxRating
  
-  def calculateRatingChanges(self, previousRatings: Dict[Party, int],
-                             standingsRows: List[StandingsRow]) -> Dict[Party, int]:
+  def calculateRatingChanges(self, previousRatings: Dict[Participante, int],
+                             standingsRows: List[StandingsRow]) -> Dict[Participante, int]:
     contestants: List[Contestant] = []
 
     for standingsRow in standingsRows:
         rank = standingsRow.rank
         party = standingsRow.party
-        contestants.append(Contestant(party, rank, standingsRow.points, previousRatings.get(party)));
+        contestants.append(Contestant(party, rank, standingsRow.points, previousRatings.get(party, CodeforcesRatingCalculator.INITIAL_RATING)))
 
     self.process(contestants)
 
-    ratingChanges: Dict[Party, int] = {}
+    ratingChanges: Dict[Participante, int] = {}
     for contestant in contestants:
         ratingChanges[contestant.party] = contestant.delta
 
     return ratingChanges
 
   @classmethod
-  def getEloWinProbability(ra, rb) -> float:
+  def getEloWinProbability(cls, ra, rb) -> float:
     return 1.0 / (1 + math.pow(10, (rb - ra) / 400.0))
  
   def getSeed(self, contestants: List[Contestant], rating: int) -> float:
@@ -193,11 +193,11 @@ class CodeforcesRatingCalculator(object):
 
   @classmethod
   def sortByPointsDesc(cls, contestants: List[Contestant]):
-    contestants.sort(cmp=lambda o1, o2: sign(o2.points - o1.points))
+    contestants.sort(key=lambda c: c.points, reverse=True)
 
   @classmethod
   def sortByRatingDesc(cls, contestants: List[Contestant]):
-    contestants.sort(cmp=lambda o1, o2: sign(o2.rating - o1.rating))
+    contestants.sort(key=lambda c: c.rating, reverse=True)
 
   def process(self, contestants: List[Contestant]):
     if not contestants:
@@ -226,12 +226,12 @@ class CodeforcesRatingCalculator(object):
       contestant.delta += inc
 
     # Sum of top-4*sqrt should be adjusted to zero.
-    sum = 0
-    zeroSumCount = min(int(4 * math.round(math.sqrt(n))), n)
+    sum4 = 0
+    zeroSumCount = min(int(4 * round(math.sqrt(n))), n)
     for i in range(zeroSumCount):
-        sum += contestants[i].delta
+        sum4 += contestants[i].delta
 
-    inc = min(max(-sum / zeroSumCount, -10), 0)
+    inc = min(max(-sum4 / zeroSumCount, -10), 0)
     for contestant in contestants:
         contestant.delta += inc
 
