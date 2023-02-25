@@ -27,7 +27,7 @@ def genera_standings(participantes: Participantes, ranking: pd.DataFrame) -> Lis
   for _, row in ranking.iterrows():
     if not row['tiene_envios']:
       continue
-    participante = participantes.participantes[unidecode(row['nombre'])]
+    participante = participantes.participantes[participantes.alias_db.nombre_canonico(unidecode(row['nombre']))]
     standings.append(StandingsRow(row['rank'], row['puntos'], participante))
   return standings
 

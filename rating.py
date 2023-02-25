@@ -110,7 +110,7 @@ class Contestant(object):
 
 
 class CodeforcesRatingCalculator(object):
-  INITIAL_RATING = 1500 
+  INITIAL_RATING = 1500
 
   def aggregateRating(self, ratingChanges: List[RatingChange]):
     rating = CodeforcesRatingCalculator.INITIAL_RATING

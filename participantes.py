@@ -21,6 +21,14 @@ class Participante(object):
     self.eventos: int = 0
 
 
+class AliasDb(object):
+  def __init__(self):
+    self.db = dict()
+
+  def nombre_canonico(self, nombre):
+    return self.db.get(nombre, nombre)
+
+
 class Participantes(object):
   def __init__(self, omegaup_client: api.Client, id_hoja_registro: Optional[str]):
     self.omegaup_client = omegaup_client
@@ -28,6 +36,7 @@ class Participantes(object):
     self.data: Optional[pd.DataFrame] = None
     # self.lee_registro()
     self.participantes: Dict[str, Participante] = {}
+    self.alias_db = AliasDb()
 
   def lee_registro(self):
     sheets = gspread.service_account()
@@ -86,7 +95,7 @@ class Participantes(object):
   def combina_ranking(self, db: DbConcursos):
     for concurso in db.concursos:
       for nombre in concurso.ranking.nombre:
-        nombre = unidecode(nombre)
+        nombre = self.alias_db.nombre_canonico(unidecode(nombre))
         if nombre not in self.participantes:
           self.participantes[nombre] = Participante(nombre=nombre)
 

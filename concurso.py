@@ -91,8 +91,8 @@ class Concurso(object):
     if self.scoreboard is None:
       try:
         self.scoreboard = self.contest_api.scoreboard(contest_alias=self.alias)
-      except:
-        pass
+      except Exception as e:
+        logging.error("No se pudo descargar scoreboard: %s", e)
       if self.scoreboard is None:
         logging.error('No se pudo cargar scoreboard de %s', self.alias)
         return
