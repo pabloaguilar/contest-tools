@@ -62,7 +62,7 @@ class DbProblemas(object):
     return f'https://omegaup.com/problem/{alias}/edit/'
 
   def _usado(self, alias):
-    return self.usados_en_cursos[alias][0] if alias in self.usados_en_cursos else ''
+    return ';'.join(curso[0] for curso in self.usados_en_cursos[alias]) if alias in self.usados_en_cursos else ''
 
   def _tags(self, problem):
     return [tag.name for tag in problem.tags]
