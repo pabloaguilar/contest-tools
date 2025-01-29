@@ -25,14 +25,24 @@ class DbProblemas(object):
 
   def carga_lista(self):
     problem_api = api.Problem(self.omegaup_client)
-    admin_problem_list = problem_api.adminList(page=1, page_size=100)
+    page = 1
+    page_size = 100
     self.problems = []
-    for problem in admin_problem_list.problems:
-      admins = problem_api.admins(problem_alias=problem.alias)
-      for admin_group in admins.group_admins:
-        if admin_group.alias == FLAGS.admin_group:
-          self.problems.append(problem)
+    try:
+      while True:
+        admin_problem_list = problem_api.adminList(page=page, page_size=page_size)
+        logging.info(f'{len(admin_problem_list.problems)} en la pag {page}')
+        for problem in admin_problem_list.problems:
+          admins = problem_api.admins(problem_alias=problem.alias)
+          for admin_group in admins.group_admins:
+            if admin_group.alias == FLAGS.admin_group:
+              self.problems.append(problem)
+              break
+        if len(admin_problem_list.problems) < page_size:
+          logging.info(f'Parando en la pagina {page}')
           break
+    except Exception as e:
+      print(e)
 
   def carga_cursos(self):
     course_api = api.Course(self.omegaup_client)

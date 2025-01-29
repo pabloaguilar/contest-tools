@@ -5,7 +5,7 @@ from absl import logging
 import csv
 import pandas as pd
 
-from typing import Dict, List
+from typing import Dict, List, Tuple
 from unidecode import unidecode
 
 from auth import Client
@@ -13,12 +13,12 @@ from concurso import Concurso, DbConcursos
 from participantes import Participante, Participantes
 from rating import CodeforcesRatingCalculator, StandingsRow
 
-def aplicar_cambios(rating: Dict[Participante, int], cambios: Dict[Participante, int]) -> Dict[Participante, int]:
+def aplicar_cambios(rating: Dict[Participante, int], cambios: Dict[Participante, int]) -> Dict[Participante, Tuple[int,int]]:
   for participante, cambio in cambios.items():
     if participante in rating:
-      rating[participante] = round(rating[participante] + cambio)
+      rating[participante] = (round(rating[participante][0] + cambio), rating[participante][1] + 1)
     else:
-      rating[participante] = round(CodeforcesRatingCalculator.INITIAL_RATING + cambio)
+      rating[participante] = (round(CodeforcesRatingCalculator.INITIAL_RATING + cambio), 1)
   return rating
 
 def genera_standings(participantes: Participantes, ranking: pd.DataFrame) -> List[StandingsRow]:
@@ -60,7 +60,7 @@ def main(argv):
   with open('rating.csv', 'w') as salida:
     writer = csv.writer(salida)
     for participante, rating in rating_en_orden:
-      writer.writerow([participante.nombre, rating])
+      writer.writerow([participante.nombre, *rating])
 
 
 if __name__ == '__main__':

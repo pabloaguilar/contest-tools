@@ -1,7 +1,7 @@
 import collections
 import math
 from statistics import NormalDist
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Tuple
 
 from absl import flags
 from absl import logging
@@ -128,14 +128,14 @@ class CodeforcesRatingCalculator(object):
 
     return maxRating
  
-  def calculateRatingChanges(self, previousRatings: Dict[Participante, int],
+  def calculateRatingChanges(self, previousRatings: Dict[Participante, Tuple[int,int]],
                              standingsRows: List[StandingsRow]) -> Dict[Participante, int]:
     contestants: List[Contestant] = []
 
     for standingsRow in standingsRows:
         rank = standingsRow.rank
         party = standingsRow.party
-        contestants.append(Contestant(party, rank, standingsRow.points, previousRatings.get(party, CodeforcesRatingCalculator.INITIAL_RATING)))
+        contestants.append(Contestant(party, rank, standingsRow.points, previousRatings.get(party, (CodeforcesRatingCalculator.INITIAL_RATING, 0))[0]))
 
     self.process(contestants)
 
